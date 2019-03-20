@@ -12,13 +12,14 @@ def sudoku_solver(puzzle):
         search(puzzle, relatives, tracking, tries)
     return puzzle
 
+
 def print_puzzle(puzzle):
     for n in puzzle:
         print(n)
 
 
 def search(puzzle, relatives, tracking, tries):
-    values, i, j = get_min_coord(puzzle, relatives, tries) 
+    values, i, j = get_min_coord(puzzle, relatives, tries)
     tracking.append((i, j))
 
     for val in values:
@@ -56,7 +57,10 @@ def get_min_coord(puzzle, relatives, tries):
         choice = get_choice(puzzle, relatives[i][j])
         if not mini or len(mini[0]) > len(choice):
             mini = [choice, i, j]
+    if not mini:
+        print_puzzle(puzzle)
     return mini
+
 
 def valid(puzzle, relatives):
     res = 0
@@ -98,17 +102,18 @@ def generate_empty_dic():
 
 
 def get_relative(x, y):
-    h = [(x, i) for i in range(9)]  #  horizontals
-    v = [(i, y) for i in range(9)]  #  verticals
-    x -= x%3
-    y -= y%3
-    d = [(x+i, y+j) for i, j in product(range(3), repeat=2)]  #  diagonals
+    h = [(x, i) for i in range(9)]  # horizontals
+    v = [(i, y) for i in range(9)]  # verticals
+    x -= x % 3
+    y -= y % 3
+    d = [(x+i, y+j) for i, j in product(range(3), repeat=2)]  # diagonals
     return set(h + v + d)
 
 
 def cells():
     for i, j in product(range(9), repeat=2):
         yield (i, j)
+
 
 def copy(puzzle):
     out = generate_empty_dic()
@@ -117,27 +122,21 @@ def copy(puzzle):
     return out
 
 
+def parse_input(raw):
+    raw = raw[:-1]
+    assert len(raw) == 9*9
+    assert raw.isdigit()
+
+    out = generate_empty_dic()
+    for i, j in product(range(9), repeat=2):
+        out[i][j] = int(raw[i*9+j])
+    return out
+
+
 if __name__ == "__main__":
-    hard = [[0, 0, 6, 1, 0, 0, 0, 0, 8], 
-            [0, 8, 0, 0, 9, 0, 0, 3, 0], 
-            [2, 0, 0, 0, 0, 5, 4, 0, 0], 
-            [4, 0, 0, 0, 0, 1, 8, 0, 0], 
-            [0, 3, 0, 0, 7, 0, 0, 4, 0], 
-            [0, 0, 7, 9, 0, 0, 0, 0, 3], 
-            [0, 0, 8, 4, 0, 0, 0, 0, 6], 
-            [0, 2, 0, 0, 5, 0, 0, 8, 0], 
-            [1, 0, 0, 0, 0, 2, 5, 0, 0]]
-
-    easy = [[0, 0, 0, 4, 0, 8, 1, 5, 0], 
-            [1, 0, 5, 6, 0, 3, 2, 0, 0], 
-            [0, 0, 0, 9, 1, 5, 7, 0, 0], 
-            [2, 5, 6, 0, 0, 1, 9, 0, 4], 
-            [0, 9, 0, 0, 0, 0, 0, 2, 0], 
-            [4, 0, 3, 8, 0, 0, 6, 1, 5], 
-            [0, 0, 8, 3, 4, 9, 0, 0, 0], 
-            [0, 0, 9, 2, 0, 6, 4, 0, 3], 
-            [0, 6, 4, 1, 0, 7, 0, 0, 0]]
-
-
-    solved = sudoku_solver(hard)
-    print_puzzle(solved)
+    with open("input.txt") as _file:
+        raw = _file.readline()
+        puzzle = parse_input(raw)
+        solved = sudoku_solver(puzzle)
+        print_puzzle(solved)
+        print()
