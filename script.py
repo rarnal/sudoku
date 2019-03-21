@@ -1,25 +1,37 @@
-from itertools import product, permutations
+from itertools import product
 
 
 def sudoku_solver(puzzle):
-
+    check_puzzle(puzzle)
     relatives = get_all_relatives()
     solve(puzzle, relatives)
     validity = valid(puzzle, relatives)
     if validity != 0:
         tracking = []
         tries = []
-        search(puzzle, relatives, tracking, tries)
+        if not search(puzzle, relatives, tracking, tries):
+            raise ValueError("This sudoku could not be solved")
+    print(len(tries))
     return puzzle
+
+
+def check_puzzle(puzzle):
+    assert len(puzzle) == 9
+    assert all(len(row) == 9 for row in puzzle)
+    assert all(0 <= val <= 9 for row in puzzle for val in row)
+
 
 def print_puzzle(puzzle):
     for n in puzzle:
         print(n)
 
 
-def search(puzzle, relatives, tracking, tries):
-    values, i, j = get_min_coord(puzzle, relatives, tries) 
+def search(puzzle, relatives, tracking, tries, check_tries=False, count=0):
+    values, i, j = get_min_coord(puzzle, relatives, tries, check_tries) 
     tracking.append((i, j))
+
+    print("{}{}".format(' '*count, (i, j)))
+    count += 1
 
     for val in values:
         puzzle[i][j] = val
@@ -28,30 +40,36 @@ def search(puzzle, relatives, tracking, tries):
 
         if validity == 0:
             return True
-        if validity == 1:
-            if search(puzzle, relatives, tracking, tries):
+        elif validity == 1:
+            if search(puzzle, relatives, tracking, tries, count):
                 return True
-
-    while tracking[-1] != (i, j):
-        x, y = tracking[-1]
-        puzzle[x][y] = 0
-        del tracking[-1]
-
+        elif validity == 2: 
+            clean_tracking(i, j, puzzle, tracking)
+   
+    clean_tracking(i, j, puzzle, tracking)
     puzzle[i][j] = 0
     del tracking[-1]
 
     while not tracking:
         tries.append((i, j))
-        if search(puzzle, relatives, tracking, tries):
+        if search(puzzle, relatives, tracking, tries, True, count):
             return True
 
     return False
 
+def clean_tracking(i, j, puzzle, tracking):
+    while tracking[-1] != (i, j):
+        x, y = tracking[-1]
+        puzzle[x][y] = 0
+        del tracking[-1]
 
-def get_min_coord(puzzle, relatives, tries):
+
+
+
+def get_min_coord(puzzle, relatives, tries, check_tries):
     mini = []
     for i, j in cells():
-        if puzzle[i][j] or (i, j) in tries:
+        if puzzle[i][j] or (check_tries and (i, j) in tries):
             continue
         choice = get_choice(puzzle, relatives[i][j])
         if not mini or len(mini[0]) > len(choice):
@@ -137,7 +155,16 @@ if __name__ == "__main__":
             [0, 0, 8, 3, 4, 9, 0, 0, 0], 
             [0, 0, 9, 2, 0, 6, 4, 0, 3], 
             [0, 6, 4, 1, 0, 7, 0, 0, 0]]
+    
+    issue = [[0, 0, 6, 3, 0, 0, 0, 0, 2],
+             [0, 3, 0, 0, 4, 0, 0, 6, 0],
+             [7, 0, 0, 0, 0, 1, 9, 0, 0],
+             [2, 0, 0, 0, 0, 8, 7, 0, 0],
+             [0, 1, 0, 0, 5, 0, 0, 4, 0],
+             [0, 0, 9, 1, 0, 0, 0, 0, 5],
+             [0, 0, 7, 4, 0, 0, 0, 0, 8],
+             [0, 9, 0, 0, 1, 0, 0, 2, 0],
+             [3, 0, 0, 0, 0, 5, 6, 0, 0]]
 
-
-    solved = sudoku_solver(hard)
+    solved = sudoku_solver(issue)
     print_puzzle(solved)
