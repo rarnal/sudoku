@@ -2,13 +2,15 @@ from itertools import product
 
 
 def sudoku_solver(puzzle):
+    print_puzzle(puzzle)
     check_puzzle(puzzle)
     relatives = get_all_relatives()
     solve(puzzle, relatives)
     validity = valid(puzzle, relatives)
+    tracking = []
+    tries = []
+
     if validity != 0:
-        tracking = []
-        tries = []
         if not search(puzzle, relatives, tracking, tries):
             raise ValueError("This sudoku could not be solved")
     print(len(tries))
@@ -27,15 +29,21 @@ def print_puzzle(puzzle):
 
 
 def search(puzzle, relatives, tracking, tries, check_tries=False, count=0):
-    values, i, j = get_min_coord(puzzle, relatives, tries, check_tries) 
+    mini = get_min_coord(puzzle, relatives, tries, check_tries)
+
+    if not mini:
+        return False
+
+    values, i, j = mini
     tracking.append((i, j))
 
-    print("{}{}".format(' '*count, (i, j)))
+    #print("{}{}".format(' '*count, (i, j)))
     count += 1
 
     for val in values:
         puzzle[i][j] = val
-        solve(puzzle, relatives, tracking)
+        if not solve(puzzle, relatives, tracking):
+            break 
         validity = valid(puzzle, relatives)
 
         if validity == 0:
@@ -57,13 +65,12 @@ def search(puzzle, relatives, tracking, tries, check_tries=False, count=0):
 
     return False
 
+
 def clean_tracking(i, j, puzzle, tracking):
     while tracking[-1] != (i, j):
         x, y = tracking[-1]
         puzzle[x][y] = 0
         del tracking[-1]
-
-
 
 
 def get_min_coord(puzzle, relatives, tries, check_tries):
@@ -75,6 +82,7 @@ def get_min_coord(puzzle, relatives, tries, check_tries):
         if not mini or len(mini[0]) > len(choice):
             mini = [choice, i, j]
     return mini
+
 
 def valid(puzzle, relatives):
     res = 0
@@ -91,11 +99,14 @@ def solve(puzzle, relatives, tracking=None):
         if puzzle[i][j]:
             continue
         choices = get_choice(puzzle, relatives[i][j])
+        if len(choices) == 0:
+            return False 
         if len(choices) == 1:
             if tracking:
                 tracking.append((i, j))
             puzzle[i][j] = choices.pop()
-            solve(puzzle, relatives, tracking)
+            return solve(puzzle, relatives, tracking)
+    return True
 
 
 def get_choice(puzzle, relative):
@@ -166,5 +177,46 @@ if __name__ == "__main__":
              [0, 9, 0, 0, 1, 0, 0, 2, 0],
              [3, 0, 0, 0, 0, 5, 6, 0, 0]]
 
-    solved = sudoku_solver(issue)
+
+    issue2 = [[6, 0, 0, 0, 0, 0, 0, 0, 2],
+              [0, 0, 3, 6, 0, 1, 7, 0, 0],
+              [0, 7, 0, 0, 4, 0, 0, 1, 0],
+              [0, 5, 0, 9, 0, 4, 0, 3, 0],
+              [0, 0, 9, 0, 0, 0, 1, 0, 0],
+              [0, 6, 0, 7, 0, 8, 0, 2, 0],
+              [0, 3, 0, 0, 6, 0, 0, 5, 0],
+              [0, 0, 5, 3, 0, 9, 4, 0, 0],
+              [7, 0, 0, 0, 0, 0, 0, 0, 3]]
+
+    issue3 = [[0, 9, 0, 0, 7, 1, 0, 0, 4],
+              [2, 0, 0, 0, 0, 0, 0, 7, 0],
+              [0, 0, 3, 0, 0, 0, 2, 0, 0],
+              [0, 0, 0, 9, 0, 0, 0, 3, 5],
+              [0, 0, 0, 0, 1, 0, 0, 8, 0],
+              [7, 0, 0, 0, 0, 8, 4, 0, 0],
+              [0, 0, 9, 0, 0, 6, 0, 0, 0],
+              [0, 1, 7, 8, 0, 0, 0, 0, 0],
+              [6, 0, 0, 0, 2, 0, 7, 0, 0]]
+
+    issue4 = [[0, 0, 2, 0, 0, 1, 0, 0, 0],
+              [3, 0, 0, 6, 8, 0, 7, 0, 0],
+              [0, 0, 0, 5, 0, 0, 6, 0, 0],
+              [0, 0, 7, 0, 0, 4, 0, 0, 0],
+              [0, 0, 4, 0, 1, 7, 0, 0, 9],
+              [0, 0, 0, 9, 0, 0, 8, 0, 0],
+              [7, 0, 5, 0, 2, 0, 0, 3, 0],
+              [0, 1, 0, 0, 0, 0, 0, 5, 0],
+              [0, 8, 0, 0, 4, 0, 9, 0, 1]]
+
+    issue5 = [[0, 0, 0, 0, 9, 0, 5, 0, 3],
+              [0, 4, 5, 0, 0, 0, 0, 0, 1],
+              [0, 0, 0, 0, 0, 6, 4, 0, 0],
+              [0, 0, 9, 0, 0, 2, 0, 0, 0],
+              [0, 1, 0, 9, 8, 4, 0, 6, 0],
+              [0, 0, 0, 5, 0, 0, 2, 0, 0],
+              [0, 0, 1, 8, 0, 0, 0, 0, 0],
+              [2, 0, 0, 0, 0, 0, 1, 8, 0],
+              [8, 0, 3, 0, 7, 0, 0, 0, 0]]
+
+    solved = sudoku_solver(issue5)
     print_puzzle(solved)
