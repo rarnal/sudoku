@@ -1,7 +1,10 @@
 from itertools import product
 from timeit import time
+from timer import time_deco
 
+dico = {}
 
+@time_deco(dico)
 def sudoku_solver(puzzle):
     check_puzzle(puzzle)
     relatives = get_all_relatives()
@@ -18,17 +21,20 @@ def sudoku_solver(puzzle):
     return puzzle
 
 
+@time_deco(dico)
 def check_puzzle(puzzle):
     assert len(puzzle) == 9
     assert all(len(row) == 9 for row in puzzle)
     assert all(0 <= val <= 9 for row in puzzle for val in row)
 
 
+@time_deco(dico)
 def print_puzzle(puzzle):
     for n in puzzle:
         print(n)
 
 
+@time_deco(dico)
 def search(puzzle, relatives, tracking, tries, check_tries=False):
     mini = get_min_coord(puzzle, relatives, tries, check_tries)
 
@@ -41,7 +47,7 @@ def search(puzzle, relatives, tracking, tries, check_tries=False):
     for val in values:
         puzzle[i][j] = val
         if not solve(puzzle, relatives, tracking):
-            break 
+            continue 
         validity = valid(puzzle, relatives)
 
         if validity == 0:
@@ -64,6 +70,7 @@ def search(puzzle, relatives, tracking, tries, check_tries=False):
     return False
 
 
+@time_deco(dico)
 def clean_tracking(i, j, puzzle, tracking):
     while tracking[-1] != (i, j):
         x, y = tracking[-1]
@@ -71,6 +78,7 @@ def clean_tracking(i, j, puzzle, tracking):
         tracking.pop()
 
 
+@time_deco(dico)
 def get_min_coord(puzzle, relatives, tries, check_tries):
     mini = []
     for i, j in cells():
@@ -82,6 +90,7 @@ def get_min_coord(puzzle, relatives, tries, check_tries):
     return mini
 
 
+@time_deco(dico)
 def valid(puzzle, relatives):
     res = 0
     for i, j in cells():
@@ -92,6 +101,7 @@ def valid(puzzle, relatives):
     return res
 
 
+@time_deco(dico)
 def solve(puzzle, relatives, tracking=None):
     for i, j in cells():
         if puzzle[i][j]:
@@ -107,11 +117,13 @@ def solve(puzzle, relatives, tracking=None):
     return True
 
 
+@time_deco(dico)
 def get_choice(puzzle, relative):
     taken = set(puzzle[x][y] for x, y in relative)
     return [i for i in range(1, 10) if i not in taken]
 
 
+@time_deco(dico)
 def get_all_relatives():
     out = generate_empty_dic()
     for i, j in cells():
@@ -120,10 +132,12 @@ def get_all_relatives():
     return out
 
 
+@time_deco(dico)
 def generate_empty_dic():
     return [[None for __ in range(9)] for _ in range(9)]
 
 
+@time_deco(dico)
 def get_relative(x, y):
     h = [(x, i) for i in range(9)]  #  horizontals
     v = [(i, y) for i in range(9)]  #  verticals
@@ -133,6 +147,7 @@ def get_relative(x, y):
     return set(h + v + d)
 
 
+@time_deco(dico)
 def cells():
     for i, j in product(range(9), repeat=2):
         yield (i, j)
@@ -155,7 +170,7 @@ def parse_input(raw):
     return out
 
 if __name__ == "__main__":
-
+    total = 0
     with open("input.txt") as file_:
         for raw in file_:
             puzzle = parse_input(raw)
@@ -163,6 +178,9 @@ if __name__ == "__main__":
             solved = sudoku_solver(puzzle)
             end = time.time()
             print("Solved in {:0.5f} seconds".format(end-start))
+            total += end - start
             print_puzzle(solved)
             print()
+    print("Total time: {:0.5f} seconds".format(total))
+    print(dico)
 
