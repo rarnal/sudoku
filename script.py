@@ -1,4 +1,5 @@
 from itertools import product
+from collections import deque
 from timeit import time
 from timer import time_deco
 
@@ -7,15 +8,14 @@ dico = {}
 @time_deco(dico)
 def sudoku_solver(puzzle):
     check_puzzle(puzzle)
-    relatives = get_all_relatives()
 
-    solve(puzzle, relatives)
-    validity = valid(puzzle, relatives)
+    solve(puzzle)
+    validity = valid(puzzle)
 
-    tries = []
+    tries = set()
     if validity != 0:
-        tracking = []
-        if not search(puzzle, relatives, tracking, tries):
+        tracking = deque()
+        if not search(puzzle, tracking, tries):
             raise ValueError("This sudoku could not be solved")
     print(len(tries))
     return puzzle
@@ -26,6 +26,7 @@ def check_puzzle(puzzle):
     assert len(puzzle) == 9
     assert all(len(row) == 9 for row in puzzle)
     assert all(0 <= val <= 9 for row in puzzle for val in row)
+    assert len([val for row in puzzle for val in row if val]) >= 17
 
 
 @time_deco(dico)
@@ -35,8 +36,8 @@ def print_puzzle(puzzle):
 
 
 @time_deco(dico)
-def search(puzzle, relatives, tracking, tries, check_tries=False):
-    mini = get_min_coord(puzzle, relatives, tries, check_tries)
+def search(puzzle, tracking, tries):
+    mini = get_min_coord(puzzle, tries)
 
     if not mini:
         return False
@@ -46,14 +47,14 @@ def search(puzzle, relatives, tracking, tries, check_tries=False):
 
     for val in values:
         puzzle[i][j] = val
-        if not solve(puzzle, relatives, tracking):
+        if not solve(puzzle, tracking):
             continue 
-        validity = valid(puzzle, relatives)
+        validity = valid(puzzle)
 
         if validity == 0:
             return True
         elif validity == 1:
-            if search(puzzle, relatives, tracking, tries, True):
+            if search(puzzle, tracking, tries):
                 return True
         elif validity == 2: 
             clean_tracking(i, j, puzzle, tracking)
@@ -63,8 +64,8 @@ def search(puzzle, relatives, tracking, tries, check_tries=False):
     tracking.pop()
 
     while not tracking:
-        tries.append((i, j))
-        if search(puzzle, relatives, tracking, tries, True):
+        tries.add((i, j))
+        if search(puzzle, tracking, tries):
             return True
 
     return False
@@ -79,10 +80,10 @@ def clean_tracking(i, j, puzzle, tracking):
 
 
 @time_deco(dico)
-def get_min_coord(puzzle, relatives, tries, check_tries):
+def get_min_coord(puzzle, tries):
     mini = []
     for i, j in cells():
-        if puzzle[i][j] or (check_tries and (i, j) in tries):
+        if puzzle[i][j] or (i, j) in tries:
             continue
         choice = get_choice(puzzle, relatives[i][j])
         if not mini or len(mini[0]) > len(choice):
@@ -91,29 +92,57 @@ def get_min_coord(puzzle, relatives, tries, check_tries):
 
 
 @time_deco(dico)
-def valid(puzzle, relatives):
+def valid(puzzle):
     res = 0
-    for i, j in cells():
-        if not puzzle[i][j]:
+    for i in range(9):
+        if not res and 0 in puzzle[i]:
             res = 1
-        elif puzzle[i][j] in [puzzle[x][y] for x, y in relatives[i][j]]:
-            return 2
+
+        temp = [0] * 10
+        for x in puzzle[i]:
+            if not x:
+                continue
+            temp[x] += 1
+            if temp[x] > 1:
+                return 2
+
+        temp = [0] * 10
+        for j in range(9):
+            x = puzzle[j][i]
+            if not x:
+                continue
+            temp[x] += 1
+            if temp[x] > 1:
+                return 2
+
+        if i%3 == 0:
+            for j in range(0, 9, 3):
+                temp = [0] * 10
+                for r in range(3):
+                    for c in range(3):
+                        x = puzzle[i+r][i+c]
+                        if not x:
+                            continue
+                        temp[x] += 1
+                        if temp[x] > 1:
+                            return 2
+
     return res
 
 
 @time_deco(dico)
-def solve(puzzle, relatives, tracking=None):
+def solve(puzzle, tracking=None):
     for i, j in cells():
         if puzzle[i][j]:
             continue
         choices = get_choice(puzzle, relatives[i][j])
-        if len(choices) == 0:
+        if not choices:
             return False 
         if len(choices) == 1:
             if tracking:
                 tracking.append((i, j))
-            puzzle[i][j] = choices.pop()
-            return solve(puzzle, relatives, tracking)
+            puzzle[i][j] = choices[0]
+            return solve(puzzle, tracking)
     return True
 
 
@@ -168,6 +197,11 @@ def parse_input(raw):
     for i, j in product(range(9), repeat=2):
         out[i][j] = int(raw[i*9+j])
     return out
+
+
+
+relatives = get_all_relatives()
+
 
 if __name__ == "__main__":
     total = 0
