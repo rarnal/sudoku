@@ -48,7 +48,7 @@ def search(puzzle, tracking, tries):
     for val in values:
         puzzle[i][j] = val
         if not solve(puzzle, tracking):
-            continue 
+            continue
         validity = valid(puzzle)
 
         if validity == 0:
@@ -56,9 +56,9 @@ def search(puzzle, tracking, tries):
         elif validity == 1:
             if search(puzzle, tracking, tries):
                 return True
-        elif validity == 2: 
+        elif validity == 2:
             clean_tracking(i, j, puzzle, tracking)
-   
+
     clean_tracking(i, j, puzzle, tracking)
     puzzle[i][j] = 0
     tracking.pop()
@@ -82,7 +82,7 @@ def clean_tracking(i, j, puzzle, tracking):
 @time_deco(dico)
 def get_min_coord(puzzle, tries):
     mini = []
-    for i, j in cells():
+    for i, j in cells:
         if puzzle[i][j] or (i, j) in tries:
             continue
         choice = get_choice(puzzle, relatives[i][j])
@@ -132,12 +132,12 @@ def valid(puzzle):
 
 @time_deco(dico)
 def solve(puzzle, tracking=None):
-    for i, j in cells():
+    for i, j in cells:
         if puzzle[i][j]:
             continue
         choices = get_choice(puzzle, relatives[i][j])
         if not choices:
-            return False 
+            return False
         if len(choices) == 1:
             if tracking:
                 tracking.append((i, j))
@@ -148,14 +148,16 @@ def solve(puzzle, tracking=None):
 
 @time_deco(dico)
 def get_choice(puzzle, relative):
-    taken = set(puzzle[x][y] for x, y in relative)
-    return [i for i in range(1, 10) if i not in taken]
+    out = [False] * 10
+    for x, y in relative:
+        out[puzzle[x][y]] = True
+    return [i for i in range(1, 10) if not out[i]]
 
 
 @time_deco(dico)
 def get_all_relatives():
     out = generate_empty_dic()
-    for i, j in cells():
+    for i, j in cells:
         out[i][j] = get_relative(i, j)
         out[i][j].discard((i, j))
     return out
@@ -176,15 +178,9 @@ def get_relative(x, y):
     return set(h + v + d)
 
 
-@time_deco(dico)
-def cells():
-    for i, j in product(range(9), repeat=2):
-        yield (i, j)
-
-
 def copy(puzzle):
     out = generate_empty_dic()
-    for i, j in cells():
+    for i, j in cells:
         out[i][j] = puzzle[i][j]
     return out
 
@@ -194,14 +190,14 @@ def parse_input(raw):
     assert len(raw) == 9*9
     assert raw.isdigit()
     out = generate_empty_dic()
-    for i, j in product(range(9), repeat=2):
+    for i, j in cells:
         out[i][j] = int(raw[i*9+j])
     return out
 
 
-
+cells = [(i, j) for i, j in product(range(9), repeat=2)]
 relatives = get_all_relatives()
-
+relatives_values = generate_empty_dic()
 
 if __name__ == "__main__":
     total = 0
